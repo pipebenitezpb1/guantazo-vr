@@ -8,6 +8,10 @@ Peleas en un estadio 360° hecho con una **imagen equirectangular**, y se puede 
 - 3D: **three.js 0.160.0** (`StereoEffect` para la pantalla dividida, WebXR para visores).
 - Personajes, estadio, interfaz y sonidos son propios; los sonidos se sintetizan con Web Audio, sin archivos.
 
+> **Aviso:** proyecto personal y sin fines de lucro. **No está afiliado, asociado, autorizado ni respaldado por Nintendo.**
+> Los personajes, el estadio, la interfaz y los sonidos son originales; no se usa ningún personaje, imagen, sonido ni otro recurso de Nintendo.
+> «Wii», «Mii» y «Wii Sports» son marcas registradas de Nintendo y se mencionan solo como referencia.
+
 ## Cómo ejecutarlo
 
 ```bash
