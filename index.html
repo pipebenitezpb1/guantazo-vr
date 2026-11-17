@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>¡Guantazo! · boxeo con las manos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <div id="flash"></div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div class="side left">
+      <div class="name">TÚ</div>
+      <div class="bar"><div class="ghost" id="pGhost"></div><div class="fill" id="pHp"></div></div>
+    </div>
+    <div id="center"><div id="roundLbl">ROUND 1</div><div id="timer">1:00</div></div>
+    <div class="side right">
+      <div class="name" id="rName">RIVAL</div>
+      <div class="bar"><div class="ghost" id="rGhost"></div><div class="fill" id="rHp"></div></div>
+    </div>
+  </div>
+  <div id="counters" class="hidden">
+    <div>Golpes <b id="hits">0</b></div>
+    <div id="comboBox">Combo <b id="combo">0</b></div>
+  </div>
+  <div id="warn" class="hidden"><span>!</span><small id="warnTxt"></small></div>
+  <div id="big"></div>
+  <div id="popups"></div>
+  <div id="hint" class="hidden"></div>
+
+  <!-- Botones de vista (siempre a mano) -->
+  <div id="vrTools">
+    <button id="btnStereo" title="VR de cartón: pantalla dividida (V)">👓</button>
+    <button id="btnGyro" title="Mirar moviendo el celular">📱</button>
+    <button id="btnCenter" title="Centrar la vista (C o doble clic)">🎯</button>
+  </div>
+
+  <!-- Cámara espejo -->
+  <div id="cam">
+    <video id="video" playsinline muted></video>
+    <canvas id="overlay"></canvas>
+    <div id="camMsg">Cámara apagada</div>
+    <div id="chips">
+      <span class="chip" id="chipHands">✋ 0</span>
+      <span class="chip" id="chipGuard">🛡 guardia</span>
+      <span class="chip" id="chipDodge">↔ esquiva</span>
+    </div>
+  </div>
+
+  <!-- Pantallas -->
+  <div id="menu" class="screen">
+    <div class="card">
+      <h1>¡Guantazo!</h1>
+      <p class="sub">Boxeo en un estadio 360° que controlas con tus manos</p>
+      <div class="howto">
+        <div><b>👊 Recto</b><span>Lanza el puño rápido hacia adelante</span></div>
+        <div><b>🌀 Gancho</b><span>Golpe en curva, cruzando hacia el centro</span></div>
+        <div><b>🛡 Guardia</b><span>Sube las dos manos frente a la cara</span></div>
+        <div><b>↔ Esquiva</b><span>Inclínate a un lado cuando el rival brille</span></div>
+      </div>
+      <div class="opts">
+        <label>Vista
+          <select id="optView">
+            <option value="normal">Normal (arrastra para mirar)</option>
+            <option value="stereo">VR de cartón (pantalla dividida)</option>
+          </select>
+        </label>
+        <label>Cámara
+          <select id="optCam">
+            <option value="user">Webcam frontal (espejo)</option>
+            <option value="environment">Trasera (celular en el visor)</option>
+          </select>
+        </label>
+        <div class="pano">
+          <span>Fondo 360°: <b id="panoName">estadio generado</b></span>
+          <label class="btn small ghostBtn">🖼 Usar mi imagen 360…<input type="file" id="file360" accept="image/*" hidden></label>
+          <button class="btn small ghostBtn" id="btnPanoReset">Estadio original</button>
+        </div>
+      </div>
+      <p class="rivalLine">Rival: <b id="menuRival">—</b></p>
+      <div class="btns">
+        <button class="btn" id="btnCam">🎥 Jugar con cámara</button>
+        <button class="btn alt" id="btnKey">⌨️ Probar con teclado</button>
+        <button class="btn vr hidden" id="btnXR">🥽 Entrar en VR</button>
+      </div>
+      <p class="keys">Teclado: <kbd>F</kbd>/<kbd>J</kbd> rectos · <kbd>R</kbd>/<kbd>U</kbd> ganchos · <kbd>Espacio</kbd> guardia · <kbd>←</kbd>/<kbd>→</kbd> esquivar · <kbd>V</kbd> VR de cartón · <kbd>C</kbd> centrar vista</p>
+    </div>
+  </div>
+
+  <div id="loading" class="screen hidden">
+    <div class="card">
+      <h2 id="loadTitle">Preparando el ring…</h2>
+      <p id="loadMsg">Cargando el detector de manos</p>
+      <div class="btns hidden" id="loadBtns">
+        <button class="btn alt" id="btnFallback">⌨️ Jugar con teclado</button>
+        <button class="btn" id="btnBack1">Volver</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="calib" class="screen hidden">
+    <div class="card">
+      <h2>¡En guardia!</h2>
+      <p>Ponte a unos 60 cm de la cámara con <b>los dos puños frente al pecho</b> y quédate quieto un momento.</p>
+      <div class="progress"><div id="calibFill"></div></div>
+      <p id="calibMsg">Manos detectadas: 0 / 2</p>
+    </div>
+  </div>
+
+  <div id="between" class="screen hidden">
+    <div class="card">
+      <h2 id="betweenTitle">Fin del round</h2>
+      <div class="stats" id="betweenStats"></div>
+      <p id="betweenMsg">Recuperando aire…</p>
+    </div>
+  </div>
+
+  <div id="result" class="screen hidden">
+    <div class="card">
+      <h1 id="resultTitle">¡VICTORIA!</h1>
+      <p class="sub" id="resultSub"></p>
+      <div class="stats" id="resultStats"></div>
+      <div class="btns">
+        <button class="btn" id="btnNext">Siguiente rival</button>
+        <button class="btn alt" id="btnRetry">Revancha</button>
+        <button class="btn ghostBtn" id="btnMenu">Menú</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="dropHint">Suelta aquí tu imagen equirectangular (2:1)</div>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>

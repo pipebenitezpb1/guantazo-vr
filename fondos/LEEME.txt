@@ -1,0 +1,2 @@
+Pon aquí tus imágenes 360 equirectangulares (2:1) y ábrelas con
+http://localhost:8790/?fondo=fondos/tu-imagen.jpg
