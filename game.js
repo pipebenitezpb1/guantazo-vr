@@ -1055,6 +1055,7 @@ function updateXR(tMs) {
   xr.pose.n = n;
 }
 async function enterXR() {
+  Sfx.ensure(); Sfx.click(); // crear el audio dentro del clic: el navegador del Quest bloquea el sonido creado después
   try {
     const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'] });
     await renderer.xr.setSession(session);
