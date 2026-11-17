@@ -53,6 +53,17 @@ La cámara trasera mira hacia adelante y ve tus manos. Como la mano se aleja de 
 - **Gatillo:** sigue después de terminar una pelea.
 - El marcador 3D sobre el rival reemplaza al HUD de pantalla.
 
+## Tu boxeador (creador de avatares)
+
+En el menú, pulsa **👤 Mi boxeador** para armar tu personaje. Puedes elegir:
+- cara, peinado, ojos, cejas, nariz y boca
+- un extra: cintillo, mejillas o bigote
+- colores de piel, pelo, polera, short y guantes
+- un nombre
+
+**🎲 Al azar** arma uno sorpresa. El avatar se guarda en el navegador, tus guantes usan tu color y tu nombre aparece en el marcador.
+Los rivales están hechos con las mismas piezas (`avatar.js`). Son diseños originales: no reproducen personajes de ningún otro juego.
+
 ## Cómo se juega
 
 1. **Calibración** (modo cámara): ponte a ~60 cm con los dos puños frente al pecho y quédate quieto ~1 s.

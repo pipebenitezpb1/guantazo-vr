@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { StereoEffect } from 'three/addons/effects/StereoEffect.js';
 import { drawArena360 } from './estadio360.js';
+import { buildAvatar, updateArms, OPTIONS, COLOR_FIELDS, DEFAULT_AVATAR, randomAvatar } from './avatar.js';
 
 // ============================================================
 // Configuración
@@ -26,11 +27,14 @@ const CFG = {
 const ATTACK_TIME = 0.2; // s que tarda el puño del rival en llegar
 
 const RIVALS = [
-  { name: 'Tito Tornado', skin: '#7fd3ff', shirt: '#ffd23f', shorts: '#ff5e5b', glove: '#ff3b3b', band: '#ffffff', hair: 'mohawk', hairColor: '#ff7b00',
+  { name: 'Tito Tornado', skin: '#e2a877', face: 'redonda', hair: 'puntas', hairColor: '#e86a5c', eyes: 'grande', brows: 'recta', nose: 'boton', mouth: 'amplia', extra: 'cintillo',
+    shirt: '#ffd43b', shorts: '#ff6b6b', glove: '#ff6b6b',
     hp: 90, dmg: 9, tele: 950, idle: [1.4, 2.6], recover: 1.0, blockChance: 0.15, feint: 0, scale: 1 },
-  { name: 'La Mole Morada', skin: '#b48cff', shirt: '#2ec4b6', shorts: '#3d348b', glove: '#ffb703', band: '#ff006e', hair: 'afro', hairColor: '#3a0ca3',
+  { name: 'La Mole Morada', skin: '#8d5a3b', face: 'ancha', hair: 'rizos', hairColor: '#6c5ce7', eyes: 'punto', brows: 'gruesa', nose: 'ancha', mouth: 'chica', extra: 'mejillas',
+    shirt: '#da77f2', shorts: '#343a40', glove: '#ffd43b',
     hp: 110, dmg: 12, tele: 780, idle: [1.0, 2.0], recover: 0.8, blockChance: 0.3, feint: 0.12, scale: 1.1 },
-  { name: 'Capitán Cachetes', skin: '#8ef0a0', shirt: '#ff70a6', shorts: '#1b1b3a', glove: '#00bbf9', band: '#fee440', hair: 'tuft', hairColor: '#ffffff',
+  { name: 'Capitán Cachetes', skin: '#ffe3cc', face: 'ovalada', hair: 'calvo', hairColor: '#b9b9c2', eyes: 'normal', brows: 'arco', nose: 'larga', mouth: 'sonrisa', extra: 'bigote',
+    shirt: '#38d9a9', shorts: '#1b1b3a', glove: '#4dabf7',
     hp: 130, dmg: 15, tele: 620, idle: [0.7, 1.6], recover: 0.65, blockChance: 0.4, feint: 0.2, breaker: true, scale: 1.05 },
 ];
 
@@ -276,47 +280,10 @@ function updateConfetti(dt, t) {
 // Rival: personaje original de figuras redondas y guantes flotantes
 // ============================================================
 function buildRival(def) {
-  const root = new THREE.Group();
-  const body = new THREE.Group(); root.add(body);
-  const skin = toon(def.skin);
-  body.add(mesh(SPHERE, toon(def.shirt), [0, 1.05, 0], [0.5, 0.6, 0.42]));
-  body.add(mesh(CYL, toon(def.shorts), [0, 0.58, 0], [0.46, 0.34, 0.4]));
-  body.add(mesh(CYL, toon('#ffffff'), [0, 0.76, 0], [0.47, 0.06, 0.41], 0.03));
-  for (const s of [-1, 1]) {
-    body.add(mesh(CYL, skin, [s * 0.18, 0.25, 0], [0.1, 0.4, 0.1]));
-    body.add(mesh(SPHERE, toon('#1a1030'), [s * 0.18, 0.06, 0.06], [0.13, 0.08, 0.2], 0.03));
-  }
-  const head = new THREE.Group(); head.position.y = 1.6; body.add(head);
-  head.add(mesh(SPHERE, skin, [0, 0.22, 0], 0.37));
-  const eyes = [], pupils = [], brows = [];
-  for (const s of [-1, 1]) {
-    const e = mesh(SPHERE, toon('#ffffff'), [s * 0.12, 0.28, 0.3], [0.085, 0.1, 0.06], 0.1); head.add(e); eyes.push(e);
-    const p = mesh(SPHERE, new THREE.MeshBasicMaterial({ color: '#1a1030' }), [s * 0.12, 0.27, 0.355], [0.04, 0.05, 0.02], 0); head.add(p); pupils.push(p);
-    const b = mesh(BOX, new THREE.MeshBasicMaterial({ color: '#1a1030' }), [s * 0.12, 0.41, 0.31], [0.14, 0.035, 0.03], 0); head.add(b); brows.push(b);
-    head.add(mesh(SPHERE, toon('#ff8fab'), [s * 0.22, 0.15, 0.25], [0.06, 0.04, 0.03], 0));
-  }
-  head.add(mesh(SPHERE, toon(new THREE.Color(def.skin).multiplyScalar(0.85)), [0, 0.18, 0.36], 0.06, 0.1));
-  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.018, 8, 16, Math.PI), new THREE.MeshBasicMaterial({ color: '#1a1030' }));
-  mouth.position.set(0, 0.08, 0.33); mouth.rotation.z = Math.PI; head.add(mouth);
-  const band = mesh(new THREE.TorusGeometry(0.34, 0.045, 10, 36), toon(def.band), [0, 0.36, 0], 1, 0.05); band.rotation.x = Math.PI / 2; head.add(band);
-  const hairMat = toon(def.hairColor);
-  if (def.hair === 'mohawk') {
-    for (let i = 0; i < 5; i++) head.add(mesh(CONE, hairMat, [0, 0.58 - Math.abs(i - 2) * 0.03, -0.2 + i * 0.1], [0.06, 0.22, 0.06], 0.08));
-  } else if (def.hair === 'afro') {
-    for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; head.add(mesh(SPHERE, hairMat, [Math.cos(a) * 0.24, 0.52 + Math.sin(i * 1.7) * 0.03, Math.sin(a) * 0.22 - 0.05], 0.15, 0.06)); }
-  } else {
-    for (let i = -1; i <= 1; i++) { const c = mesh(CONE, hairMat, [i * 0.08, 0.6, 0.05], [0.05, 0.2, 0.05], 0.08); c.rotation.z = -i * 0.4; head.add(c); }
-  }
-  const gloves = { L: makeGlove(def.glove, 0.2, -1), R: makeGlove(def.glove, 0.2, 1) };
-  for (const k of ['L', 'R']) { gloves[k].group.rotation.y = Math.PI; root.add(gloves[k].group); gloves[k].pos = new THREE.Vector3(); }
-  const stars = new THREE.Group(); head.add(stars); stars.position.y = 0.72;
-  for (let i = 0; i < 3; i++) { const s = mesh(new THREE.OctahedronGeometry(1, 0), toon('#ffd23f'), [Math.cos(i * 2.1) * 0.35, 0, Math.sin(i * 2.1) * 0.35], 0.07, 0.15); stars.add(s); }
-  stars.visible = false;
-  const bang = new THREE.Sprite(new THREE.SpriteMaterial({ map: circleTexture('!', '#ffffff', '#ff6b6b'), depthTest: false }));
-  bang.scale.setScalar(0.45); bang.position.set(0, 2.55, 0); bang.visible = false; bang.renderOrder = 11; root.add(bang);
-  root.scale.setScalar(def.scale || 1);
-  root.position.set(0, 0, -2.4);
-  return { root, body, head, eyes, pupils, brows, mouth, gloves, stars, bang };
+  const m = buildAvatar(def, { mesh, toon, makeGlove, circleTexture, SPHERE, CYL, BOX, CONE });
+  m.root.scale.setScalar(def.scale || 1);
+  m.root.position.set(0, 0, -2.4);
+  return m;
 }
 
 // ============================================================
@@ -501,16 +468,78 @@ let simMode = false;
 function later(sec, fn) { G.timers.push({ at: nowS() + sec, fn }); }
 function logEvent(e) { G.events.push({ t: Math.round(performance.now()), ...e }); if (G.events.length > 200) G.events.shift(); }
 
-function setupRival(idx) {
+function setupRival(idx, override) {
   if (R) scene.remove(R.m.root);
-  const def = RIVALS[idx];
+  const def = override || RIVALS[idx];
   R = { def, hp: def.hp, max: def.hp, state: 'idle', stateT: 0, next: 1.5, atk: null, atkGlove: 'L', feint: false, resolved: false,
     attackCount: 0, recentHits: [], hitAnim: { t: 9, dx: 0 }, hurtT: 9, dodged: false, m: buildRival(def), koT: 0 };
   scene.add(R.m.root);
   for (const k of ['L', 'R']) R.m.gloves[k].pos.set(k === 'L' ? -0.42 : 0.42, 1.25, 0.45);
-  $('rName').textContent = def.name.toUpperCase();
-  $('menuRival').textContent = `${def.name} (${idx + 1}/${RIVALS.length})`;
+  if (!override) {
+    $('rName').textContent = def.name.toUpperCase();
+    $('menuRival').textContent = `${def.name} (${idx + 1}/${RIVALS.length})`;
+  }
   updateBars(true);
+}
+
+// ============================================================
+// Tu boxeador: creador de avatares (se guarda en este navegador)
+// ============================================================
+const AV_KEY = 'guantazo.avatar';
+let PLAYER = (() => {
+  try { const v = JSON.parse(localStorage.getItem(AV_KEY)); if (v && typeof v === 'object') return { ...DEFAULT_AVATAR, ...v }; } catch (e) { /* sin almacenamiento */ }
+  return { ...DEFAULT_AVATAR };
+})();
+let draft = null;
+function applyPlayer() {
+  for (const k of ['L', 'R']) pGloves[k].mat.color.set(PLAYER.glove);
+  document.querySelector('.side.left .name').textContent = (PLAYER.name || 'TÚ').toUpperCase();
+  $('menuAvatar').textContent = PLAYER.name || 'TÚ';
+}
+function previewDraft() {
+  setupRival(G.rivalIdx, { ...RIVALS[0], ...draft, scale: 1 });
+  R.m.root.position.x = innerWidth > 760 ? 0.8 : 0;
+  setRS('idle');
+}
+function buildCreatorUI() {
+  const box = $('creatorOpts'); box.innerHTML = '';
+  const row = (label) => {
+    const r = document.createElement('div'); r.className = 'crow';
+    const l = document.createElement('span'); l.textContent = label;
+    const c = document.createElement('div'); c.className = 'cchips';
+    r.append(l, c); box.appendChild(r); return c;
+  };
+  const choose = (k, v) => { draft[k] = v; Sfx.click(); buildCreatorUI(); previewDraft(); };
+  for (const [k, o] of Object.entries(OPTIONS)) {
+    const c = row(o.label);
+    for (const [v, l] of o.items) {
+      const b = document.createElement('button'); b.className = 'cchip' + (draft[k] === v ? ' on' : ''); b.textContent = l;
+      b.onclick = () => choose(k, v); c.appendChild(b);
+    }
+  }
+  for (const [k, o] of Object.entries(COLOR_FIELDS)) {
+    const c = row(o.label);
+    for (const col of o.colors) {
+      const b = document.createElement('button'); b.className = 'swatch' + (draft[k] === col ? ' on' : '');
+      b.style.background = col; b.setAttribute('aria-label', `${o.label} ${col}`);
+      b.onclick = () => choose(k, col); c.appendChild(b);
+    }
+  }
+}
+function openCreator() {
+  Sfx.ensure(); Sfx.click();
+  draft = { ...PLAYER };
+  $('avName').value = PLAYER.name === 'TÚ' ? '' : PLAYER.name;
+  G.phase = 'creator'; showScreen('creator'); setHud(false);
+  buildCreatorUI(); previewDraft();
+}
+function closeCreator(save) {
+  if (save) {
+    PLAYER = { ...draft, name: ($('avName').value.trim() || 'TÚ').slice(0, 14) };
+    try { localStorage.setItem(AV_KEY, JSON.stringify(PLAYER)); } catch (e) { /* sin almacenamiento */ }
+    applyPlayer();
+  }
+  Sfx.click(); G.phase = 'menu'; setupRival(G.rivalIdx); setRS('idle'); showScreen('menu');
 }
 
 function setRS(state, extra = {}) {
@@ -662,7 +691,7 @@ function playerKO() {
 // ============================================================
 // Flujo: menú → calibración → rounds → resultado
 // ============================================================
-function hideScreens() { for (const id of ['menu', 'loading', 'calib', 'between', 'result']) $(id).classList.add('hidden'); }
+function hideScreens() { for (const id of ['menu', 'loading', 'calib', 'between', 'result', 'creator']) $(id).classList.add('hidden'); }
 function showScreen(id) { hideScreens(); $(id).classList.remove('hidden'); }
 function setHud(on) { for (const id of ['hud', 'counters']) $(id).classList.toggle('hidden', !on); }
 
@@ -910,11 +939,12 @@ function animateRival(dt, t) {
   m.head.rotation.y = R.hitAnim.dx * 0.4 * ha;
   if (st !== 'ko') { m.body.position.x = lerp(m.body.position.x, bodyX + R.hitAnim.dx * 0.1 * ha, 0.15); m.body.position.y = bodyY; }
   if (R.hurtT < 0.25) { eyeSq = 0.2; smile = false; }
-  m.eyes.forEach((e) => (e.scale.y = 0.1 * eyeSq));
-  m.pupils.forEach((p) => (p.scale.y = 0.05 * Math.min(1, eyeSq)));
-  m.brows[0].rotation.z = -brow; m.brows[1].rotation.z = brow;
+  m.eyes.forEach((e) => (e.scale.y = e.userData.sy * eyeSq));
+  m.pupils.forEach((p) => (p.scale.y = p.userData.sy * Math.min(1, eyeSq)));
+  m.brows[0].rotation.z = m.brows[0].userData.rz - brow; m.brows[1].rotation.z = m.brows[1].userData.rz + brow;
   m.mouth.rotation.z = smile ? Math.PI : 0;
-  m.mouth.position.y = smile ? 0.08 : 0.04;
+  m.mouth.position.y = m.mouth.userData.y - (smile ? 0 : 0.04);
+  m.root.rotation.y = G.phase === 'creator' ? Math.sin(t * 0.7) * 0.6 : 0;
   for (const g of ['L', 'R']) {
     const gm = m.gloves[g];
     gm.pos.lerp(gl[g], k);
@@ -924,6 +954,8 @@ function animateRival(dt, t) {
     else gm.mat.emissive.lerp(new THREE.Color(0, 0, 0), 0.15);
     gm.group.scale.setScalar(1 + glow * 0.25);
   }
+  updateArms(m);
+  for (const k of ['L', 'R']) pGloves[k].group.visible = G.phase !== 'creator';
 }
 
 // ---------- Mirar alrededor: arrastrar con el mouse/dedo o giroscopio ----------
@@ -994,7 +1026,7 @@ function drawHud3d() {
     const fw = Math.max(0, w * v); panel(right ? x + w - fw : x, 78, fw, 44, 22, col);
   };
   g.fillStyle = '#2c3e57'; g.font = font(34); g.textBaseline = 'middle';
-  g.textAlign = 'left'; g.fillText('TÚ', 40, 46);
+  g.textAlign = 'left'; g.fillText(PLAYER.name || 'TÚ', 40, 46);
   g.textAlign = 'right'; g.fillText(R ? R.def.name : '', W - 40, 46);
   bar(30, 380, G.player.hp / G.player.max, '#4cc46e', false);
   if (R) bar(W - 410, 380, R.hp / R.max, '#ff6b6b', true);
@@ -1175,7 +1207,13 @@ addEventListener('dragleave', () => document.body.classList.remove('dropping'));
 addEventListener('drop', (e) => { e.preventDefault(); document.body.classList.remove('dropping'); loadPanoFromFile(e.dataTransfer.files[0]); });
 if (!('DeviceOrientationEvent' in window) || !matchMedia('(pointer: coarse)').matches) $('btnGyro').classList.add('hidden');
 
+$('btnAvatar').onclick = openCreator;
+$('btnAvRandom').onclick = () => { draft = randomAvatar(draft.name); Sfx.click(); buildCreatorUI(); previewDraft(); };
+$('btnAvSave').onclick = () => closeCreator(true);
+$('btnAvCancel').onclick = () => closeCreator(false);
+
 setupRival(0);
+applyPlayer();
 renderer.setAnimationLoop(step); // igual que requestAnimationFrame, pero también funciona dentro de WebXR
 
 // ============================================================
@@ -1192,7 +1230,7 @@ function fakeHand(cx, cy, s) {
 }
 window.boxeo = {
   start, processHands, fakeHand, onPlayerPunch, hands, calib, CFG,
-  VIEW, camera, recenter, hud3d, setStereo, loadPanoFromUrl, useGeneratedPano, xr,
+  VIEW, camera, recenter, openCreator, closeCreator, get player() { return PLAYER; }, hud3d, setStereo, loadPanoFromUrl, useGeneratedPano, xr,
   get state() {
     return { phase: G.phase, mode: G.mode, round: G.round, timeLeft: +G.timeLeft.toFixed(1), playerHp: G.player.hp,
       rival: R && { name: R.def.name, hp: R.hp, state: R.state }, stats: G.stats, combo: G.combo, pose: handPose(performance.now()), delegate: delegateUsed };

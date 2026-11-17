@@ -106,6 +106,22 @@ kbd { background: #fff; border: 2px solid var(--blue-l); border-radius: 6px; pad
 .stats b { display: block; font-weight: 800; font-size: 26px; color: var(--blue); }
 .stats span { font-size: 12px; color: var(--muted); }
 
+/* ---------- Creador de avatares ---------- */
+.creatorScreen { background: transparent; backdrop-filter: none; place-items: center start; }
+.creatorCard { width: min(430px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; text-align: left; padding: 20px 22px; }
+.creatorCard h2 { margin-bottom: 8px; }
+.nameField { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+.nameField input { flex: 1; font: inherit; font-weight: 800; font-size: 16px; color: var(--ink); padding: 8px 12px; border-radius: 12px; border: 2px solid var(--blue-l); }
+.crow { display: grid; grid-template-columns: 70px 1fr; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid #e6edf5; }
+.crow > span { font-weight: 800; font-size: 13px; color: var(--muted); }
+.cchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cchip { font: inherit; font-weight: 800; font-size: 13px; padding: 5px 11px; border-radius: 999px; border: 2px solid var(--blue-l); background: #fff; color: var(--ink); cursor: pointer; }
+.cchip.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+.swatch { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px #c9d6e6; cursor: pointer; }
+.swatch.on { box-shadow: 0 0 0 3px var(--blue); }
+#btnAvatar { vertical-align: middle; }
+@media (max-width: 760px) { .creatorScreen { place-items: end center; } .creatorCard { max-height: 48vh; padding: 14px 16px; } .creatorCard h2 { font-size: 22px; } .crow { grid-template-columns: 1fr; gap: 4px; } }
+
 #dropHint { position: fixed; inset: 20px; border: 4px dashed var(--blue); border-radius: 30px; display: none; place-items: center; font-weight: 800; font-size: 26px; color: var(--blue); background: rgba(255, 255, 255, .7); z-index: 50; pointer-events: none; }
 body.dropping #dropHint { display: grid; }
 
